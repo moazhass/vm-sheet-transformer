@@ -1,0 +1,5 @@
+Server Name,vCPU,RAM (GB),Disk (GB),OS,Status
+RUH-DSCS-WEBP01,4,16,300,Windows Server 2019,Powered On
+RUH-DSCS-WEBP02,4,4,200,Windows Server 2019,Powered On
+RUH-Mashor-App1,4,8,200,Ubuntu 20.04,Running
+RUH-Mashor-DBP1,4,16,401,Red Hat Enterprise Linux 8,Running

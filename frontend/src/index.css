@@ -1,0 +1,29 @@
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+@layer components {
+  .card {
+    @apply bg-white border border-devoteam-line rounded-lg shadow-sm;
+  }
+  .btn-primary {
+    @apply inline-flex items-center justify-center gap-2 rounded-md bg-devoteam-accent
+           px-4 py-2 text-sm font-medium text-white shadow-sm hover:bg-orange-600
+           disabled:opacity-50 disabled:cursor-not-allowed transition;
+  }
+  .btn-ghost {
+    @apply inline-flex items-center justify-center gap-2 rounded-md border border-devoteam-line
+           bg-white px-4 py-2 text-sm font-medium text-devoteam-ink hover:bg-devoteam-mist
+           disabled:opacity-50 disabled:cursor-not-allowed transition;
+  }
+  .field-label {
+    @apply block text-xs font-semibold uppercase tracking-wide text-devoteam-slate mb-1;
+  }
+  .input {
+    @apply w-full rounded-md border border-devoteam-line bg-white px-3 py-2 text-sm
+           focus:border-devoteam-accent focus:outline-none focus:ring-1 focus:ring-devoteam-accent;
+  }
+  .badge {
+    @apply inline-flex items-center rounded-full px-2 py-0.5 text-xs font-medium;
+  }
+}

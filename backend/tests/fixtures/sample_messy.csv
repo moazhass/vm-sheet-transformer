@@ -1,0 +1,7 @@
+Discovery Export
+Generated: 2026-01-15
+
+Server Name,vCPU,RAM (GB),Disk (TB),Operating System,State,Internal IP,External IP,Datacenter
+RUH-WEB-01,4,16,0.3,Windows Server 2019,Powered On,10.0.0.5,,DMZ (Tier 1)
+RUH-DB-01,8,32,1.5,Red Hat Enterprise Linux 8,Running,10.0.0.6,203.0.113.5,Production (Tier 1)
+,4,8,0.2,Ubuntu 20.04,Running,10.0.0.7,,Staging (Tier 3)

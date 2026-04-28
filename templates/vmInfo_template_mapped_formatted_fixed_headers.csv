@@ -1,0 +1,21 @@
+MachineId,MachineName,PrimaryIPAddress(optional),PrimaryMACAddress(optional),PublicIPAddress(optional),IpAddressListSemiColonDelimited(optional),TotalDiskAllocatedGiB,TotalDiskUsedGiB,MachineTypeLabel(optional),AllocatedProcessorCoreCount,MemoryGiB,HostingLocation(optional),OsType(optional),OsPublisher(optional),OsName,OsVersion(optional),MachineStatus(optional),CreateDate(optional),IsPhysical
+DISC-001-RUH-DSCS-WEBP01,RUH-DSCS-WEBP01,,,,,300,,WEB,4,16,DMZ (Tier 1),Windows,,Windows,,running,,0
+DISC-002-RUH-DSCS-WEBP02,RUH-DSCS-WEBP02,,,,,200,,WEB,4,4,DMZ (Tier 1),Windows,,Windows,,running,,0
+DISC-003-RUH-MASHOR-APP1,RUH-Mashor-App1,,,,,200,,APP,4,8,Production (Tier 1),Windows,,Windows,,running,,0
+DISC-004-RUH-MASHOR-APP2,RUH-Mashor-App2,,,,,242,,APP,4,8,Production (Tier 1),Windows,,Windows,,running,,0
+DISC-005-RUH-MASHOR-DBP1,RUH-Mashor-DBP1,,,,,401,,DB,4,16,Production (Tier 1),Windows,,Windows,,running,,0
+DISC-006-RUH-MASHOR-DBP2,RUH-Mashor-DBP2,,,,,400,,DB,4,16,Production (Tier 1),Windows,,Windows,,running,,0
+DISC-007-RUH-EXP-APP01,RUH-EXP-APP01,,,,,400.01,,APP,16,32,Production (Tier 1),Windows,,Windows,,running,,0
+DISC-008-RUH-EXP-APP01,RUH-EXP-APP01,,,,,400.01,,WEB,16,32,DMZ (Tier 1),Windows,,Windows,,running,,0
+DISC-009-RUH-EXP-APP02,RUH-EXP-APP02,,,,,400.01,,APP,16,32,Production (Tier 1),Windows,,Windows,,running,,0
+DISC-010-RUH-EXP-WEB01,RUH-EXP-Web01,,,,,400,,WEB,16,16,Production (Tier 1),Windows,,Windows,,running,,0
+DISC-011-RUH-EXP-WEB02,RUH-EXP-Web02,,,,,400,,WEB,16,16,Production (Tier 1),Windows,,Windows,,running,,0
+DISC-012-RUH-EXP-SQL01,RUH-EXP-SQL01,,,,,470.39,,DB,16,32,Production (Tier 1),Windows,,Windows,,running,,0
+DISC-013-RUH-EXP-SQL02,RUH-EXP-SQL02,,,,,470.68,,DB,16,32,Production (Tier 1),Windows,,Windows,,running,,0
+DISC-014-RUH-WEB-MSPOOL,RUH-WEB-MSPOOL,,,,,300,,WEB & APP,4,8,Production (Tier 1),Windows,,Windows,,running,,0
+DISC-015-RUH-WEB-SQPO001,RUH-WEB-SQPO001,,,,,4577.28,,DB,8,16,Production (Tier 1),Windows,,Windows,,running,,0
+DISC-016-RUH-APP-STG0,RUH-APP-STG0,,,,,200,,WEB & APP,4,16,Staging (Tier 3),Windows,,Windows,,running,,0
+DISC-017-RUH-SQLDB-STG01,RUH-SQLDB-STG01,,,,,200,,DB,2,8,Staging (Tier 3),Windows,,Windows,,running,,0
+DISC-018-RUH-APP-STG02,RUH-APP-STG02,,,,,200,,WEB & APP,2,8,Staging (Tier 3),Windows,,Windows,,running,,0
+DISC-019-RUH-APP-DEV001,RUH-APP-DEV001,,,,,350,,WEB & APP,4,16,Development (Tier 3),Windows,,Windows,,running,,0
+DISC-020-RUH-SQLDB-DEV01,Ruh-SQLDB-DEV01,,,,,200,,DB,2,8,Development (Tier 3),Windows,,Windows,,running,,0

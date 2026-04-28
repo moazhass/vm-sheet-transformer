@@ -1,0 +1,16 @@
+* text=auto eol=lf
+
+*.sh text eol=lf
+Dockerfile text eol=lf
+*.dockerfile text eol=lf
+*.py text eol=lf
+*.yml text eol=lf
+*.yaml text eol=lf
+
+# Treat lockfiles and binary assets as binary
+*.png binary
+*.jpg binary
+*.gif binary
+*.ico binary
+*.xlsx binary
+*.xls binary

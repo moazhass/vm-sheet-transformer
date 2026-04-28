@@ -1,0 +1,3 @@
+Hostname,CPUs,Memory MB,Disk MB,OS Name,Power State,Public IP
+web01,2,8192,204800,Ubuntu 22.04,running,
+db01,8,32768,1048576,Windows Server 2022,powered on,203.0.113.10
