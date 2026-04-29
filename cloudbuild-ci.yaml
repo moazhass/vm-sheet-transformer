@@ -30,7 +30,9 @@ steps:
       - |
         set -eu
         cd frontend
-        npm ci --no-audit --no-fund
+        # TODO: generate package-lock.json and switch to `npm ci` for
+        # reproducible installs.
+        npm install --no-audit --no-fund
         echo "==> tsc --noEmit (type-check only)"
         npx tsc --noEmit
         echo "==> vite build (smoke)"

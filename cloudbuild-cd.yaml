@@ -46,7 +46,9 @@ steps:
       - |
         set -eu
         cd frontend
-        npm ci --no-audit --no-fund
+        # TODO: generate package-lock.json and switch to `npm ci` for
+        # reproducible installs.
+        npm install --no-audit --no-fund
         npx tsc --noEmit
 
   - id: docker-build
