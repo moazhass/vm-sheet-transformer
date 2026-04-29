@@ -22,7 +22,6 @@ serviceAccount: projects/moaz-moazplayground/serviceAccounts/cb-cicd-sa@moaz-moa
 
 images:
   - "${_REGION}-docker.pkg.dev/${_PROJECT}/${_AR_REPO}/${_IMAGE_NAME}:${SHORT_SHA}"
-  - "${_REGION}-docker.pkg.dev/${_PROJECT}/${_AR_REPO}/${_IMAGE_NAME}:${SHORT_SHA}-${BUILD_ID}"
 
 steps:
   - id: backend-test
@@ -57,7 +56,6 @@ steps:
     args:
       - build
       - --tag=${_REGION}-docker.pkg.dev/${_PROJECT}/${_AR_REPO}/${_IMAGE_NAME}:${SHORT_SHA}
-      - --tag=${_REGION}-docker.pkg.dev/${_PROJECT}/${_AR_REPO}/${_IMAGE_NAME}:${SHORT_SHA}-${BUILD_ID}
       - --label=git-commit=${COMMIT_SHA}
       - --label=git-branch=${BRANCH_NAME}
       - --label=build-id=${BUILD_ID}
@@ -66,12 +64,9 @@ steps:
   - id: docker-push
     name: gcr.io/cloud-builders/docker
     waitFor: ['docker-build']
-    entrypoint: bash
     args:
-      - -c
-      - |
-        docker push ${_REGION}-docker.pkg.dev/${_PROJECT}/${_AR_REPO}/${_IMAGE_NAME}:${SHORT_SHA}
-        docker push ${_REGION}-docker.pkg.dev/${_PROJECT}/${_AR_REPO}/${_IMAGE_NAME}:${SHORT_SHA}-${BUILD_ID}
+      - push
+      - ${_REGION}-docker.pkg.dev/${_PROJECT}/${_AR_REPO}/${_IMAGE_NAME}:${SHORT_SHA}
 
   - id: clouddeploy-release
     name: gcr.io/google.com/cloudsdktool/cloud-sdk:slim
@@ -81,7 +76,7 @@ steps:
       - deploy
       - releases
       - create
-      - release-${SHORT_SHA}-${BUILD_ID}
+      - release-${SHORT_SHA}
       - --project=${_PROJECT}
       - --region=${_REGION}
       - --delivery-pipeline=${_DELIVERY_PIPELINE}
