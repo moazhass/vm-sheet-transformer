@@ -12,6 +12,7 @@ from typing import Iterable
 import pandas as pd
 
 from app.mapper import REQUIRED_COLUMNS
+from app.os_catalog import is_canonical, is_generic, suggest_for
 
 NUMERIC_COLUMNS = {
     "TotalDiskAllocatedGiB",
@@ -137,22 +138,57 @@ def validate(df: pd.DataFrame) -> list[ValidationIssue]:
                     message=f"TotalDiskAllocatedGiB={n:g} exceeds 1 PiB — verify unit conversion.",
                 ))
 
-        # Duplicates
-        if "MachineName" in df.columns and not _is_blank(row["MachineName"]):
-            if name_counts[str(row["MachineName"]).strip()] > 1:
-                issues.append(ValidationIssue(
-                    row=row_num,
-                    target_column="MachineName",
-                    severity="warning",
-                    message=f"Duplicate MachineName '{row['MachineName']}'.",
-                ))
+        # Duplicate MachineId — ERROR per spec (blocks export)
         if "MachineId" in df.columns and not _is_blank(row["MachineId"]):
             if id_counts[str(row["MachineId"]).strip()] > 1:
                 issues.append(ValidationIssue(
                     row=row_num,
                     target_column="MachineId",
-                    severity="warning",
+                    severity="error",
                     message=f"Duplicate MachineId '{row['MachineId']}'.",
+                    suggested_fix="Use the bulk action 'Auto-generate missing MachineId' or rename manually.",
+                ))
+
+        # Duplicate MachineName — WARNING only when MachineId is also unique.
+        # Two rows with the same name BUT distinct MachineIds is acceptable
+        # (Migration Center only requires MachineId uniqueness).
+        if "MachineName" in df.columns and not _is_blank(row["MachineName"]):
+            if name_counts[str(row["MachineName"]).strip()] > 1:
+                machine_id = str(row.get("MachineId", "")).strip()
+                if machine_id and id_counts.get(machine_id, 0) == 1:
+                    issues.append(ValidationIssue(
+                        row=row_num,
+                        target_column="MachineName",
+                        severity="warning",
+                        message=f"Duplicate MachineName '{row['MachineName']}' (MachineId is unique, so export is allowed).",
+                        suggested_fix="Use bulk action 'Deduplicate MachineName' to append a -02 suffix.",
+                    ))
+
+        # OsName quality — generic placeholder is a warning with suggestions
+        if "OsName" in df.columns and not _is_blank(row["OsName"]):
+            os_name = str(row["OsName"]).strip()
+            if is_generic(os_name):
+                hints = suggest_for(os_name)
+                fix = (
+                    "Pick a specific OS in the inline editor. Suggestions: "
+                    + ", ".join(hints[:3]) if hints else "Pick a specific OS in the inline editor."
+                )
+                issues.append(ValidationIssue(
+                    row=row_num,
+                    target_column="OsName",
+                    severity="warning",
+                    message=f"Generic OsName '{os_name}' — Migration Center needs the exact version.",
+                    suggested_fix=fix,
+                ))
+            elif not is_canonical(os_name):
+                # Not generic, but not in our GCE catalog either — let the user know
+                # in case it's a typo or pre-canonicalisation form.
+                issues.append(ValidationIssue(
+                    row=row_num,
+                    target_column="OsName",
+                    severity="warning",
+                    message=f"OsName '{os_name}' is not in the GCE catalog.",
+                    suggested_fix="Select the matching canonical OS from the dropdown.",
                 ))
 
     return issues

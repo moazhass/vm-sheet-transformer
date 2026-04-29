@@ -3,11 +3,12 @@ import type { ValidationIssue } from "../types";
 
 interface Props {
   issues: ValidationIssue[];
+  onIssueClick?: (issue: ValidationIssue) => void;
 }
 
 type Filter = "all" | "error" | "warning";
 
-export function ValidationPanel({ issues }: Props): JSX.Element {
+export function ValidationPanel({ issues, onIssueClick }: Props): JSX.Element {
   const [filter, setFilter] = useState<Filter>("all");
 
   const filtered = useMemo(() => {
@@ -42,7 +43,14 @@ export function ValidationPanel({ issues }: Props): JSX.Element {
       ) : (
         <ul className="divide-y divide-devoteam-line max-h-80 overflow-y-auto">
           {filtered.map((i, idx) => (
-            <li key={idx} className="px-4 py-2 text-xs flex items-start gap-3">
+            <li
+              key={idx}
+              className={`px-4 py-2 text-xs flex items-start gap-3 ${
+                onIssueClick ? "cursor-pointer hover:bg-devoteam-mist/40" : ""
+              }`}
+              onClick={onIssueClick ? () => onIssueClick(i) : undefined}
+              title={onIssueClick ? "Jump to row & focus the cell" : undefined}
+            >
               <span
                 className={`badge ${
                   i.severity === "error" ? "bg-red-100 text-red-700" : "bg-amber-100 text-amber-700"
@@ -54,6 +62,7 @@ export function ValidationPanel({ issues }: Props): JSX.Element {
                 <div>
                   <span className="font-mono text-devoteam-ink">row {i.row}</span>{" "}
                   · <span className="font-mono">{i.target_column}</span>
+                  {onIssueClick && <span className="ml-2 text-devoteam-slate/70">↗</span>}
                 </div>
                 <div className="text-devoteam-slate">{i.message}</div>
                 {i.suggested_fix && (

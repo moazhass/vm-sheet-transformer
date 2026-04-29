@@ -1,4 +1,6 @@
 import type {
+  EditableRow,
+  OsCatalog,
   PreviewResponse,
   TemplateColumns,
   UploadResponse,
@@ -32,6 +34,10 @@ export async function fetchTemplateColumns(): Promise<TemplateColumns> {
   return handle<TemplateColumns>(await fetch("/api/template-columns", { credentials: "include" }));
 }
 
+export async function fetchOsCatalog(): Promise<OsCatalog> {
+  return handle<OsCatalog>(await fetch("/api/os-catalog", { credentials: "include" }));
+}
+
 export async function uploadFile(file: File): Promise<UploadResponse> {
   const fd = new FormData();
   fd.append("file", file);
@@ -46,6 +52,9 @@ export interface PreviewArgs {
   header_row_index: number;
   mapping: Record<string, string | null>;
   defaults: Record<string, string>;
+  /** When set, the server skips re-parse + re-transform and validates
+   * these rows directly. Used by the inline-edit / Revalidate flow. */
+  rows?: EditableRow[];
 }
 
 export async function previewMapping(args: PreviewArgs): Promise<PreviewResponse> {

@@ -77,13 +77,52 @@ def test_disk_mb_to_gib_conversion():
     assert float(out.iloc[0]["TotalDiskAllocatedGiB"]) == 200.0
 
 
-def test_os_normalization():
+def test_os_canonicalization_preserves_version():
+    """The transformer must preserve the actual OS version (not flatten to
+    'Windows'/'Linux') so Migration Center can identify the workload."""
     df = _df([
         {"name": "a", "cpu": 1, "ram": 1, "disk": 1, "os": "Windows Server 2019"},
         {"name": "b", "cpu": 1, "ram": 1, "disk": 1, "os": "Ubuntu 22.04"},
         {"name": "c", "cpu": 1, "ram": 1, "disk": 1, "os": "Red Hat Enterprise Linux 8"},
-        {"name": "d", "cpu": 1, "ram": 1, "disk": 1, "os": "CentOS 7"},
-        {"name": "e", "cpu": 1, "ram": 1, "disk": 1, "os": "Oracle Linux"},
+        {"name": "d", "cpu": 1, "ram": 1, "disk": 1, "os": "CentOS Stream 9"},
+        {"name": "e", "cpu": 1, "ram": 1, "disk": 1, "os": "Oracle Linux 9"},
+    ])
+    mapping = {
+        "MachineName": "name",
+        "AllocatedProcessorCoreCount": "cpu",
+        "MemoryGiB": "ram",
+        "TotalDiskAllocatedGiB": "disk",
+        "OsName": "os",
+    }
+    out = transform(df, mapping)
+    assert out.iloc[0]["OsName"] == "Windows Server 2019 Datacenter"
+    assert out.iloc[1]["OsName"] == "Ubuntu 22.04 LTS"
+    assert out.iloc[2]["OsName"] == "Red Hat Enterprise Linux 8"
+    assert out.iloc[3]["OsName"] == "CentOS Stream 9"
+    assert out.iloc[4]["OsName"] == "Oracle Linux 9"
+
+
+def test_os_type_publisher_version_derived_from_canonical():
+    df = _df([{"name": "a", "cpu": 1, "ram": 1, "disk": 1, "os": "Ubuntu 22.04"}])
+    mapping = {
+        "MachineName": "name",
+        "AllocatedProcessorCoreCount": "cpu",
+        "MemoryGiB": "ram",
+        "TotalDiskAllocatedGiB": "disk",
+        "OsName": "os",
+    }
+    out = transform(df, mapping)
+    assert out.iloc[0]["OsType(optional)"] == "Linux"
+    assert out.iloc[0]["OsPublisher(optional)"] == "Canonical"
+    assert out.iloc[0]["OsVersion(optional)"] == "22.04"
+
+
+def test_generic_os_value_preserved_for_validator_to_flag():
+    """Generic placeholders like 'Windows' should NOT be silently mapped to a
+    specific version. The transformer keeps them so validator warns the user."""
+    df = _df([
+        {"name": "a", "cpu": 1, "ram": 1, "disk": 1, "os": "Windows"},
+        {"name": "b", "cpu": 1, "ram": 1, "disk": 1, "os": "Linux"},
     ])
     mapping = {
         "MachineName": "name",
@@ -94,8 +133,7 @@ def test_os_normalization():
     }
     out = transform(df, mapping)
     assert out.iloc[0]["OsName"] == "Windows"
-    for i in range(1, 5):
-        assert out.iloc[i]["OsName"] == "Linux"
+    assert out.iloc[1]["OsName"] == "Linux"
 
 
 def test_status_normalization():

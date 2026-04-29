@@ -1,16 +1,17 @@
 import { useEffect, useState } from "react";
 import { downloadBlob, exportFile, previewMapping } from "../api";
-import type { PreviewSummary, UploadResponse } from "../types";
+import type { EditableRow, PreviewSummary, UploadResponse } from "../types";
 
 interface Props {
   upload: UploadResponse;
   mapping: Record<string, string | null>;
   defaults: Record<string, string>;
+  rows: EditableRow[] | null;
   onBack: () => void;
   onReset: () => void;
 }
 
-export function ExportStep({ upload, mapping, defaults, onBack, onReset }: Props): JSX.Element {
+export function ExportStep({ upload, mapping, defaults, rows, onBack, onReset }: Props): JSX.Element {
   const [summary, setSummary] = useState<PreviewSummary | null>(null);
   const [busy, setBusy] = useState<"csv" | "xlsx" | null>(null);
   const [error, setError] = useState<string | null>(null);
@@ -23,10 +24,11 @@ export function ExportStep({ upload, mapping, defaults, onBack, onReset }: Props
       header_row_index: upload.header_row_index,
       mapping,
       defaults,
+      rows: rows ?? undefined,
     })
       .then((d) => setSummary(d.summary))
       .catch((e) => setError((e as Error).message));
-  }, [upload, mapping, defaults]);
+  }, [upload, mapping, defaults, rows]);
 
   const doExport = async (fmt: "csv" | "xlsx") => {
     setError(null);
@@ -38,6 +40,7 @@ export function ExportStep({ upload, mapping, defaults, onBack, onReset }: Props
         header_row_index: upload.header_row_index,
         mapping,
         defaults,
+        rows: rows ?? undefined,
         format: fmt,
       });
       const stem = upload.filename.replace(/\.[^.]+$/, "");

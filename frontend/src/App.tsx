@@ -4,7 +4,7 @@ import { ExportStep } from "./components/ExportStep";
 import { MappingStep } from "./components/MappingStep";
 import { PreviewStep } from "./components/PreviewStep";
 import { UploadStep } from "./components/UploadStep";
-import type { TemplateColumns, UploadResponse, User } from "./types";
+import type { EditableRow, TemplateColumns, UploadResponse, User } from "./types";
 
 type Step = "upload" | "mapping" | "preview" | "export";
 
@@ -25,6 +25,9 @@ export function App(): JSX.Element {
   const [defaults, setDefaults] = useState<Record<string, string>>({
     IsPhysical: "0",
   });
+  // Edited rows shared between Preview and Export so manual fixes persist
+  // when the user navigates back and forth.
+  const [editedRows, setEditedRows] = useState<EditableRow[] | null>(null);
 
   useEffect(() => {
     fetchMe()
@@ -119,6 +122,7 @@ export function App(): JSX.Element {
                 initial[target] = sugg.source_column;
               }
               setMapping(initial);
+              setEditedRows(null);
               setStep("mapping");
             }}
           />
@@ -129,8 +133,14 @@ export function App(): JSX.Element {
             template={template}
             mapping={mapping}
             defaults={defaults}
-            onMappingChange={setMapping}
-            onDefaultsChange={setDefaults}
+            onMappingChange={(m) => {
+              setMapping(m);
+              setEditedRows(null); // mapping changed → invalidate edited rows
+            }}
+            onDefaultsChange={(d) => {
+              setDefaults(d);
+              setEditedRows(null);
+            }}
             onContinue={() => setStep("preview")}
             onBack={() => setStep("upload")}
           />
@@ -140,6 +150,8 @@ export function App(): JSX.Element {
             upload={upload}
             mapping={mapping}
             defaults={defaults}
+            rows={editedRows}
+            onRowsChange={setEditedRows}
             onBack={() => setStep("mapping")}
             onContinue={() => setStep("export")}
           />
@@ -149,10 +161,12 @@ export function App(): JSX.Element {
             upload={upload}
             mapping={mapping}
             defaults={defaults}
+            rows={editedRows}
             onBack={() => setStep("preview")}
             onReset={() => {
               setUpload(null);
               setMapping({});
+              setEditedRows(null);
               setStep("upload");
             }}
           />

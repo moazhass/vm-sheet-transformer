@@ -40,6 +40,11 @@ class PreviewRequest(BaseModel):
     header_row_index: int = 0
     mapping: dict[str, str | None] = Field(default_factory=dict)
     defaults: dict[str, str] = Field(default_factory=dict)
+    # If present, the server skips re-parse + re-transform and validates these
+    # rows directly. Used by the inline-edit / Revalidate flow on the
+    # Preview & Validate page. Internal fields prefixed with `_` are stripped
+    # from the export.
+    rows: list[dict[str, Any]] | None = None
 
 
 class ValidationIssueModel(BaseModel):

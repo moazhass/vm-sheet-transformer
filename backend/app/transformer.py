@@ -14,11 +14,7 @@ from typing import Any
 import pandas as pd
 
 from app.mapper import TARGET_COLUMNS
-
-_OS_NORMALIZATION = [
-    (re.compile(r"\bwindows\b", re.I), "Windows"),
-    (re.compile(r"\b(ubuntu|debian|red\s*hat|rhel|centos|oracle\s*linux|suse|sles|fedora|alma|rocky|amazon\s*linux|linux)\b", re.I), "Linux"),
-]
+from app.os_catalog import canonicalize_os, classify_os_type, lookup
 
 _STATUS_MAP = {
     "powered on": "running", "poweron": "running", "power on": "running",
@@ -103,21 +99,50 @@ def _convert_size_to_gib(value: Any, source_header: str) -> Any:
 
 
 def _normalize_os_name(raw: str) -> str:
+    """Return the canonical GCE OS name when recognisable, else preserve the
+    source value verbatim. Generic placeholders ('Windows', 'Linux', etc.)
+    are kept as-is so the validator can flag them and the user can pick a
+    proper version in the inline editor."""
     s = _str_or_empty(raw)
     if not s:
         return ""
-    for pattern, label in _OS_NORMALIZATION:
-        if pattern.search(s):
-            return label
-    return s
+    canonical = canonicalize_os(s)
+    return canonical if canonical else s
 
 
 def _extract_os_version(raw: str) -> str:
     s = _str_or_empty(raw)
     if not s:
         return ""
+    canonical = canonicalize_os(s)
+    if canonical:
+        entry = lookup(canonical)
+        if entry:
+            return entry.version
     m = re.search(r"\b(20\d{2}|1\d|2[0-4]\.\d{2}|\d+\.\d+(?:\.\d+)?)\b", s)
     return m.group(1) if m else ""
+
+
+def _os_type_label(os_name: str) -> str:
+    """Title-case OS family for the canonical OsType(optional) CSV column.
+    UNKNOWN classification is rendered as empty string so we never write
+    a junk value into the export."""
+    t = classify_os_type(os_name)
+    if t == "WINDOWS":
+        return "Windows"
+    if t == "LINUX":
+        return "Linux"
+    return ""
+
+
+def _os_publisher_for(os_name: str) -> str:
+    """Publisher from the catalog if recognisable, else empty."""
+    canonical = canonicalize_os(os_name)
+    if canonical:
+        entry = lookup(canonical)
+        if entry:
+            return entry.publisher
+    return ""
 
 
 def _normalize_status(raw: str) -> str:
@@ -267,21 +292,7 @@ def transform(
         else:
             out["HostingLocation(optional)"] = _str_or_empty(defaults.get("HostingLocation(optional)", ""))
 
-        # OS Type
-        src = mapping.get("OsType(optional)")
-        if src and src in row:
-            out["OsType(optional)"] = _normalize_os_name(_str_or_empty(row[src]))
-        else:
-            out["OsType(optional)"] = _str_or_empty(defaults.get("OsType(optional)", ""))
-
-        # OS Publisher
-        src = mapping.get("OsPublisher(optional)")
-        if src and src in row:
-            out["OsPublisher(optional)"] = _str_or_empty(row[src])
-        else:
-            out["OsPublisher(optional)"] = _str_or_empty(defaults.get("OsPublisher(optional)", ""))
-
-        # OS Name (required)
+        # OS Name (required) — preserve canonical version when recognisable
         src = mapping.get("OsName")
         raw_os = _str_or_empty(row[src]) if src and src in row else ""
         normalized = _normalize_os_name(raw_os)
@@ -289,7 +300,23 @@ def transform(
             normalized = _str_or_empty(defaults.get("OsName", ""))
         out["OsName"] = normalized
 
-        # OS Version
+        # OS Type (Windows / Linux) — derived from the resolved OsName
+        src = mapping.get("OsType(optional)")
+        if src and src in row and _str_or_empty(row[src]):
+            out["OsType(optional)"] = _os_type_label(_str_or_empty(row[src]))
+        else:
+            derived = _os_type_label(out["OsName"])
+            out["OsType(optional)"] = derived or _str_or_empty(defaults.get("OsType(optional)", ""))
+
+        # OS Publisher — from catalog when canonical, else passthrough/default
+        src = mapping.get("OsPublisher(optional)")
+        if src and src in row and _str_or_empty(row[src]):
+            out["OsPublisher(optional)"] = _str_or_empty(row[src])
+        else:
+            derived_pub = _os_publisher_for(out["OsName"])
+            out["OsPublisher(optional)"] = derived_pub or _str_or_empty(defaults.get("OsPublisher(optional)", ""))
+
+        # OS Version — explicit source wins, then catalog version, then regex fallback
         src = mapping.get("OsVersion(optional)")
         if src and src in row and _str_or_empty(row[src]):
             out["OsVersion(optional)"] = _str_or_empty(row[src])

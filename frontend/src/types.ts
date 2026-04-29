@@ -56,3 +56,22 @@ export interface User {
   name: string;
   picture: string;
 }
+
+export type OsType = "WINDOWS" | "LINUX" | "UNKNOWN";
+
+export interface OsCatalogEntry {
+  name: string;
+  type: OsType;
+  publisher: string;
+  version: string;
+}
+
+export interface OsCatalog {
+  options: OsCatalogEntry[];
+  generic_values: string[];
+  suggestions: Record<string, string[]>;
+}
+
+/** Row in the editable preview table. Backend canonical columns plus
+ * frontend-only `_*` helpers that get stripped before export. */
+export type EditableRow = Record<string, string | number | null | undefined>;

@@ -22,6 +22,7 @@ from app.auth import (
 from app.config import get_settings
 from app.export import export_csv, export_xlsx
 from app.mapper import REQUIRED_COLUMNS, TARGET_COLUMNS, suggest_mapping, to_dict
+from app.os_catalog import to_jsonable as os_catalog_jsonable
 from app.models import (
     ExportRequest,
     MappingSuggestionModel,
@@ -97,6 +98,10 @@ def create_app() -> FastAPI:
             "required_columns": sorted(REQUIRED_COLUMNS),
         }
 
+    @app.get("/api/os-catalog")
+    async def os_catalog(user: dict = Depends(require_user)) -> dict:
+        return os_catalog_jsonable()
+
     @app.post("/api/upload", response_model=UploadResponse)
     async def upload(
         request: Request,
@@ -163,6 +168,45 @@ def create_app() -> FastAPI:
         )
 
     def _load_for_request(req: PreviewRequest):
+        # Inline-edit / Revalidate path: trust the rows the client sends.
+        # Helper fields prefixed with `_` are stripped here so they never
+        # leak into validation or export.
+        if req.rows is not None:
+            import pandas as pd
+            from app.os_catalog import canonicalize_os, classify_os_type, lookup
+            cleaned = [
+                {k: v for k, v in row.items() if not k.startswith("_")}
+                for row in req.rows
+            ]
+            out = pd.DataFrame(cleaned)
+            for col in TARGET_COLUMNS:
+                if col not in out.columns:
+                    out[col] = ""
+            out = out[TARGET_COLUMNS].fillna("")
+
+            # Re-derive OsType/OsPublisher/OsVersion from the (possibly edited)
+            # OsName so the export always carries Migration-Center-friendly
+            # metadata. Existing non-empty user values are preserved.
+            for idx, row in out.iterrows():
+                os_name = str(row.get("OsName", "") or "").strip()
+                if not os_name:
+                    continue
+                canonical = canonicalize_os(os_name)
+                entry = lookup(canonical) if canonical else None
+                if not str(row.get("OsType(optional)", "") or "").strip():
+                    t = classify_os_type(os_name)
+                    out.at[idx, "OsType(optional)"] = (
+                        "Windows" if t == "WINDOWS" else "Linux" if t == "LINUX" else ""
+                    )
+                if entry:
+                    if not str(row.get("OsPublisher(optional)", "") or "").strip():
+                        out.at[idx, "OsPublisher(optional)"] = entry.publisher
+                    if not str(row.get("OsVersion(optional)", "") or "").strip():
+                        out.at[idx, "OsVersion(optional)"] = entry.version
+
+            return None, None, out
+
+        # Original path: parse → transform from the upload.
         record = get_store().get(req.upload_id)
         if record is None:
             raise HTTPException(status_code=404, detail="Upload not found or expired")

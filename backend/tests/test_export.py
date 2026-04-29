@@ -65,3 +65,17 @@ def test_no_extra_pandas_index_column():
     header = text.splitlines()[0]
     assert not header.startswith(",")
     assert "Unnamed" not in header
+
+
+def test_export_strips_internal_helper_fields():
+    """Helper fields prefixed with `_` (used by the frontend for source-OS
+    metadata, validation status, etc.) must NOT appear in the exported CSV."""
+    out = transform(_df(), _mapping())
+    out["_source_os"] = "Windows"
+    out["_validation_status"] = "ok"
+    csv_bytes = export_csv(out)
+    text = csv_bytes.decode("utf-8")
+    header = text.splitlines()[0]
+    assert "_source_os" not in header
+    assert "_validation_status" not in header
+    assert header == ",".join(TARGET_COLUMNS)
