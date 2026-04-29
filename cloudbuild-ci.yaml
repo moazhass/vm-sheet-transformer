@@ -1,0 +1,37 @@
+# cloudbuild-ci.yaml — runs on every PR to main. Tests only.
+# Restricted SA (cb-pr-sa): no Artifact Registry write, no Cloud Deploy access.
+
+options:
+  logging: CLOUD_LOGGING_ONLY
+  machineType: E2_HIGHCPU_4
+
+serviceAccount: projects/moaz-moazplayground/serviceAccounts/cb-pr-sa@moaz-moazplayground.iam.gserviceaccount.com
+
+steps:
+  - id: backend
+    name: python:3.12-slim
+    entrypoint: bash
+    waitFor: ['-']
+    args:
+      - -c
+      - |
+        set -euo pipefail
+        cd backend
+        pip install --quiet -r requirements.txt
+        echo "==> pytest"
+        python -m pytest tests/ -v --maxfail=3
+
+  - id: frontend
+    name: node:20-alpine
+    entrypoint: sh
+    waitFor: ['-']
+    args:
+      - -c
+      - |
+        set -eu
+        cd frontend
+        npm ci --no-audit --no-fund
+        echo "==> tsc --noEmit (type-check only)"
+        npx tsc --noEmit
+        echo "==> vite build (smoke)"
+        npm run build

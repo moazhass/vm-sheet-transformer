@@ -1,0 +1,19 @@
+apiVersion: skaffold/v4beta7
+kind: Config
+metadata:
+  name: vm-sheet-transformer
+
+profiles:
+  - name: staging
+    manifests:
+      rawYaml:
+        - deploy/cloudrun-staging.yaml
+    deploy:
+      cloudrun: {}
+
+  - name: production
+    manifests:
+      rawYaml:
+        - deploy/cloudrun-production.yaml
+    deploy:
+      cloudrun: {}

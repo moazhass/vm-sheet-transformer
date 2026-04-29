@@ -1,0 +1,40 @@
+# Single-project Cloud Deploy pipeline.
+# Apply with:
+#   gcloud deploy apply --file=deploy/clouddeploy.yaml --region=me-central2 --project=moaz-moazplayground
+
+apiVersion: deploy.cloud.google.com/v1
+kind: DeliveryPipeline
+metadata:
+  name: vm-sheet-transformer-pipeline
+description: CD pipeline for VM Sheet Transformer (staging → production with manual approval)
+serialPipeline:
+  stages:
+    - targetId: staging
+      profiles: [staging]
+    - targetId: production
+      profiles: [production]
+---
+apiVersion: deploy.cloud.google.com/v1
+kind: Target
+metadata:
+  name: staging
+description: Cloud Run staging
+run:
+  location: projects/moaz-moazplayground/locations/me-central2
+executionConfigs:
+  - usages: [RENDER, DEPLOY, VERIFY]
+    serviceAccount: cd-execution-sa@moaz-moazplayground.iam.gserviceaccount.com
+    artifactStorage: gs://vmt-clouddeploy-artifacts/staging
+---
+apiVersion: deploy.cloud.google.com/v1
+kind: Target
+metadata:
+  name: production
+description: Cloud Run production
+requireApproval: true
+run:
+  location: projects/moaz-moazplayground/locations/me-central2
+executionConfigs:
+  - usages: [RENDER, DEPLOY, VERIFY]
+    serviceAccount: cd-execution-sa@moaz-moazplayground.iam.gserviceaccount.com
+    artifactStorage: gs://vmt-clouddeploy-artifacts/production

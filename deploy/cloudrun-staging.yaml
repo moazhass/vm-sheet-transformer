@@ -1,0 +1,63 @@
+# Staging Cloud Run service. Runs with DEV_AUTH_BYPASS=true so we don't have
+# to add a second redirect URI to the OAuth client. Treat staging as a
+# test-only environment and never put real customer data through it.
+# To enable full OAuth in staging later: register the staging URL as a
+# Google OAuth authorized redirect URI, create vmt-session-secret-staging
+# and vmt-oauth-redirect-url-staging secrets, then flip DEV_AUTH_BYPASS=false
+# and add the secret refs (mirror cloudrun-production.yaml).
+
+apiVersion: serving.knative.dev/v1
+kind: Service
+metadata:
+  name: vm-sheet-transformer-staging
+  annotations:
+    run.googleapis.com/ingress: all
+    run.googleapis.com/launch-stage: GA
+spec:
+  template:
+    metadata:
+      annotations:
+        autoscaling.knative.dev/minScale: "0"
+        autoscaling.knative.dev/maxScale: "5"
+        run.googleapis.com/cpu-throttling: "true"
+        run.googleapis.com/execution-environment: gen2
+    spec:
+      serviceAccountName: vm-sheet-transformer-staging@moaz-moazplayground.iam.gserviceaccount.com
+      containerConcurrency: 20
+      timeoutSeconds: 300
+      containers:
+        - image: vm-sheet-transformer
+          ports:
+            - name: http1
+              containerPort: 8080
+          resources:
+            limits:
+              cpu: "1"
+              memory: 1Gi
+          env:
+            - name: ENVIRONMENT
+              value: staging
+            - name: DEV_AUTH_BYPASS
+              value: "true"
+            - name: SESSION_SECRET
+              value: staging-not-secret-replace-when-oauth-enabled
+            - name: ALLOWED_EMAIL_DOMAINS
+              value: devoteam.com
+            - name: MAX_UPLOAD_MB
+              value: "25"
+            - name: ENABLE_GCS_STORAGE
+              value: "false"
+            - name: LOG_LEVEL
+              value: INFO
+          startupProbe:
+            httpGet: {path: /health, port: 8080}
+            initialDelaySeconds: 5
+            periodSeconds: 5
+            failureThreshold: 30
+          livenessProbe:
+            httpGet: {path: /health, port: 8080}
+            periodSeconds: 30
+            timeoutSeconds: 5
+  traffic:
+    - percent: 100
+      latestRevision: true
